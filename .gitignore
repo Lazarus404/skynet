@@ -15,3 +15,17 @@ examples/testing/sleeper/sleepclient/sleepclient
 examples/testing/sleeper/sleepservice/sleepservice
 *~
 *.swp
+
+nohup.out
+
+data/db/journal/j._0
+
+data/db/journal/lsn
+
+data/db/mongod.lock
+
+data/db/skynet.0
+
+data/db/skynet.1
+
+data/db/skynet.ns

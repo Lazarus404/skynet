@@ -1,0 +1,69 @@
+#!/bin/bash
+
+MONGOURL="../mongodb-osx-x86_64-2.2.0/bin"
+
+START=0
+STOP=0
+MONGO=0
+DOOZER=0
+DAEMON=0
+DASHBOARD=0
+
+for ARG in $@; do
+	case $ARG in
+		"-start")
+			START=1
+		;;
+		"-stop")
+			STOP=1
+		;;
+		"-doozer")
+			DOOZER=1
+		;;
+		"-skynet")
+			DAEMON=1
+		;;
+		"-dash")
+			DASHBOARD=1
+		;;
+		"-mongo")
+			MONGO=1
+	esac
+done
+
+SKYNET=$(dirname $0)
+
+if [ $START = 1 ]; then
+
+	echo "Starting SkyNet"
+
+	if [ $MONGO = 1 ]; then
+		$SKYNET/$MONGOURL/mongod --dbpath ./data/db &
+	fi
+
+	if [ $DOOZER = 1 ]; then
+		nohup doozerd -timeout 5 -l '127.0.0.1:10000' -w '127.0.0.1:11000' -c 'dzns' &
+		sleep 2 &
+		nohup doozerd -timeout 5 -l '127.0.0.1:8046' -w '127.0.0.1:8080' -c 'skynet' -b 'doozer:?ca=127.0.0.1:10000' &
+	fi
+
+	if [ $DAEMON = 1 ]; then
+		./cmd/skydaemon/skydaemon -admin='127.0.0.1:9999' -mgodb="log" -mgoserver="127.0.0.1:27017" --version=1 &
+		sleep 5 &
+		./cmd/dashboard/dashboard -addr 127.0.0.1:8888 --webroot=./cmd/dashboard &
+	fi
+	
+elif [ $STOP = 1 ]; then
+
+	echo "Stopping SkyNet"
+
+	pkill skydaemon
+	pkill dashboard
+	pkill doozerd
+
+else
+
+	echo "[usage] run -[start|stop] -[mongo]"
+	exit
+
+fi
